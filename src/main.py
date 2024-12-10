@@ -94,6 +94,7 @@ for x in range(4):
 
 GroundImg = loadImage("ground.png", ground.w, ground.h)
 SnowmanImg = loadImage("snowman.png", snowman.w, snowman.h)
+HeartImg = loadImage("heart.png", 20, 20)
 
 
 # -----------------------------------------------------------------------------------------------------------------
@@ -109,6 +110,8 @@ running = True
 runCount = 0
 jump = False
 distance = 0
+collidedWithSnowClose = False
+snowCloseCopy = None
 
 while running:
     for event in pygame.event.get():
@@ -125,9 +128,6 @@ while running:
                 jump = True
                 blueman.velocityY = -blueman.jumpVelocity 
                     
-        
-
-
     if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump:
         blueman.velocityY += GRAVITY
 
@@ -163,12 +163,21 @@ while running:
     for x in snowmanObjects:
         if x.x > blueman.x and x.x < minimum:
             snowClose = x
+            if snowClose != snowCloseCopy:
+                collidedWithSnowClose == False
             minimum = x.x - blueman.x
 
-
+    
     if snowClose != None:
         if is_collision(blueman, snowClose, 50):
             text2 = font.render("COLLIDED", True, BLACK)
+
+            
+            if not collidedWithSnowClose:
+                collidedWithSnowClose = True
+                snowCloseCopy = snowClose
+                if blueman.lives > 0:
+                    blueman.lives -= 1
         else:
             text2 = None
 
@@ -198,10 +207,13 @@ while running:
     blueman.velocity = initVelocity + int(distance / 100000)
 
     text = font.render("DISTANCE: " + str(int(distance)), True, BLACK)
-    screen.blit(text, (10, 10))
+    screen.blit(text, (10, 40))
     
     if text2 != None:
         screen.blit(text2, (10, 25))
+
+    for x in range(blueman.lives):
+        screen.blit(HeartImg, (10 + (25 * x), 10))
 
     pygame.display.flip()
      

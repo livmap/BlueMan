@@ -7,3 +7,4 @@ class BlueMan:
         self.velocity = 5
         self.velocityY = 0
         self.jumpVelocity = 15
+        self.lives = 5
