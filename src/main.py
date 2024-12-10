@@ -41,7 +41,7 @@ groundObjects = []
 widthStopper = 0
 count = 0
 
-while widthStopper < SCREEN_WIDTH + (SCREEN_WIDTH  * 0.2):
+while widthStopper < SCREEN_WIDTH + (SCREEN_WIDTH  * 2):
     
     groundItem = Ground(count * groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
     groundObjects.append(groundItem)
@@ -49,8 +49,11 @@ while widthStopper < SCREEN_WIDTH + (SCREEN_WIDTH  * 0.2):
     count += 1
 
 blueman = BlueMan(100, 0, 75, 75)
-
 blueman.y = groundLevel - blueman.h  + (10)
+bluemanImages = []
+
+for x in range(3):
+    bluemanImages.append(loadImage("runner" + str(x + 1) + ".png", blueman.w, blueman.h))
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -63,6 +66,7 @@ Runner3 = loadImage("runner3.png", blueman.w, blueman.h)
 # -----------------------------------------------------------------------------------------------------------------
 
 running = True
+runCount = 0
 
 while running:
     for event in pygame.event.get():
@@ -76,13 +80,30 @@ while running:
         xAxis = joystick.get_axis(0)  
         yAxis = joystick.get_axis(1)
 
-    screen.blit(Runner1, (blueman.x, blueman.y))
+    blueInteger = int(runCount / 50) % 3
+
+    screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
+
     for x in groundObjects:
 
         screen.blit(GroundImg, (x.x, x.y))
 
+    if blueman.x < 400:
+        blueman.x += blueman.velocity
+    else:
+        for x in groundObjects:
+            x.x -= blueman.velocity
+
+    if groundObjects[0].x < -groundWidth - 50:
+        del groundObjects[0]
+        endIndex = len(groundObjects) - 1
+        item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
+        groundObjects.append(item)
+                
+
     pygame.display.flip()
      
+    runCount += blueman.velocity
     clock.tick(FPS)
 
 pygame.quit()
