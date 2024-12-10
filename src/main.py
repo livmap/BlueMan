@@ -1,5 +1,7 @@
 import pygame
 
+from utilities import *
+
 pygame.init()
 
 SCREEN_WIDTH = 1000
@@ -28,7 +30,12 @@ FPS = 60
 
 # -----------------------------------------------------------------------------------------------------------------
 
+Obstacle = loadImage("obstacle.png", 50, 50)
+Runner1 = loadImage("runner1.png", 40, 40)
+Runner2 = loadImage("runner2.png", 40, 40)
+Runner3 = loadImage("runner3.png", 40, 40)
 
+# -----------------------------------------------------------------------------------------------------------------
 
 running = True
 
