@@ -26,6 +26,10 @@ if pygame.joystick.get_count() > 0:
 clock = pygame.time.Clock()
 FPS = 60
 
+# -----------------------------------------------------------------------------------------------------------------
+
+
+
 running = True
 
 while running:
