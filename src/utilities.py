@@ -6,3 +6,5 @@ def loadImage(name, w=None, h=None):
 
     if w != None and h != None:
         img = pygame.transform.scale(img, (w, h))
+
+    return img
