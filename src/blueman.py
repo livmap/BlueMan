@@ -5,4 +5,5 @@ class BlueMan:
         self.w = w
         self.h = h
         self.velocity = 5
-        self.jumpPower = 0
+        self.velocityY = 0
+        self.jumpVelocity = 15
