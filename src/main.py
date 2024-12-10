@@ -111,7 +111,7 @@ runCount = 0
 jump = False
 distance = 0
 collidedWithSnowClose = False
-snowCloseCopy = None
+inCollision = None
 
 while running:
     for event in pygame.event.get():
@@ -163,23 +163,20 @@ while running:
     for x in snowmanObjects:
         if x.x > blueman.x and x.x < minimum:
             snowClose = x
-            if snowClose != snowCloseCopy:
-                collidedWithSnowClose == False
             minimum = x.x - blueman.x
 
     
     if snowClose != None:
         if is_collision(blueman, snowClose, 50):
-            text2 = font.render("COLLIDED", True, BLACK)
 
-            
-            if not collidedWithSnowClose:
-                collidedWithSnowClose = True
-                snowCloseCopy = snowClose
-                if blueman.lives > 0:
+            if blueman.lives > 0 and not(inCollision):
                     blueman.lives -= 1
+
+            inCollision = True
+                
         else:
             text2 = None
+            inCollision = False
 
 
     for x in groundObjects:
