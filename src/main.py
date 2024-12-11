@@ -123,11 +123,7 @@ text2 = None
 running = True
 runCount = 0
 jump = False
-distance = 0
-collidedWithSnowClose = False
-inCollision = None
 retrieveCount = 0
-ufoOver = False
 
 
 while running:
@@ -239,7 +235,7 @@ while running:
         apple.x = SCREEN_WIDTH * random.randint(3, 7)
 
     # Distance & Velocity Changes
-    distance = world.runCount / 75
+    world.distanceRan = world.runCount / 75
     blueman.velocity = initVelocity + int(distance / 100)
 
     screen.blit(AppleImg, (apple.x, apple.y))
@@ -247,7 +243,7 @@ while running:
     # Top Display Items ----------------------------------------------------------------------------------
 
     # Distance
-    text = font.render("DISTANCE: " + str(int(distance)), True, BLACK)
+    text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
     screen.blit(text, (10, 40))
 
     # Blueman Lives
