@@ -68,7 +68,6 @@ blueman = BlueMan(100, 0, 75, 75)
 bluemanBuffer = 10
 initVelocity = 10
 blueman.y = groundLevel - blueman.h  + (bluemanBuffer)
-blueman.velocity = initVelocity
 bluemanImages = []
 
 for x in range(3):
@@ -101,7 +100,10 @@ apple.y = groundLevel - apple.h
 for x in range(4):
     snowballImages.append(loadImage("snowball" + str(x + 1) + ".png", snowball.w, snowball.h))
 
+# Collectibles
 
+collectibles = []
+collectiblesCollected = []
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -125,6 +127,8 @@ gameOver = False
 runCount = 0
 jump = False
 retrieveCount = 0
+nextCollectible = 50
+deletedCollectible = None
 
 while running:
 
@@ -137,6 +141,33 @@ while running:
     if not gameOver:
         screen.blit(Background, (0, 0))
 
+
+        # Collectibles Generation
+        if world.distanceRan > nextCollectible:
+            nextCollectible = world.distanceRan + random.randint(50, 350)
+            randomCollect = random.randint(1, 4) 
+            collect = Collectible("", SCREEN_WIDTH * random.randint(2, 5), groundLevel - 60, 50, 50)
+            if randomCollect == 1:
+                collect.type = "ufo"
+                collect.pngName = collect.type + "_collectible.png"
+                collectibles.append(collect)
+            elif randomCollect == 2:
+                collect.type = "invincibility"
+                collect.pngName = collect.type + "_collectible.png"
+                collectibles.append(collect)
+            elif randomCollect == 3:
+                collect.type = "superJump"
+                collect.pngName = collect.type + "_collectible.png"
+                collectibles.append(collect)
+            else:
+                collect.type = "cannon"
+                collect.pngName = collect.type + "_collectible.png"
+                collectibles.append(collect)
+
+        # Velocity Up
+
+        if blueman.velocity < initVelocity:
+            blueman.velocity += 0.05
 
         # Joystick Functionality -----------------------------------------------------------------------------
 
@@ -228,6 +259,32 @@ while running:
             item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
             groundObjects.append(item)
 
+        # Collectibles
+
+        for x in range(len(collectibles)):
+            collectibles[x].x -= blueman.velocity * 0.65
+            screen.blit(loadImage(collectibles[x].pngName, collectibles[x].w, collectibles[x].h), (collectibles[x].x, collectibles[x].y))
+            if is_collision(blueman, collectibles[x], (blueman.w + collectibles[x].w) / 2):
+                collectiblesCollected.append(collectibles[x])
+                deletedCollectible = x
+            else:
+                if collectibles[x].x < -collectibles[x].w:
+                    deletedCollectible = x
+                else:
+                    deletedCollectible = None
+            
+            
+        if deletedCollectible != None and len(collectibles) > 0:
+            
+            del collectibles[deletedCollectible]
+
+        for x in range(len(collectiblesCollected)):
+            item = collectiblesCollected[x]
+            img = loadImage(item.pngName, item.w * 0.8, item.h * 0.8)
+            xVal = (SCREEN_WIDTH - 60) - (60 * x)
+            screen.blit(img, (xVal, 30))
+            
+
         # Apple
         apple.x -= blueman.velocity * 0.65
         if apple.x < -apple.w:
@@ -238,7 +295,7 @@ while running:
             apple.x = SCREEN_WIDTH * random.randint(3, 7)
 
         # Distance & Velocity Changes
-        world.distanceRan = world.runCount / 75
+        world.distanceRan = int(world.runCount / 75)
         blueman.velocity = initVelocity + int(world.distanceRan / 100)
 
         screen.blit(AppleImg, (apple.x, apple.y))
@@ -246,7 +303,7 @@ while running:
         # Top Display Items ----------------------------------------------------------------------------------
 
         # Distance
-        text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
+        text = font.render("DISTANCE: " + str(int(world.distanceRan)) + " : " + str(len(collectiblesCollected)), True, BLACK)
         screen.blit(text, (10, 40))
 
         # Blueman Lives

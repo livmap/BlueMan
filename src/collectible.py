@@ -8,5 +8,4 @@ class Collectible:
         self.h = h
         self.retrieved = True
 
-        self.pngName = t + "_collectible.png"
 
