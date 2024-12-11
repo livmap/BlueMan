@@ -1,0 +1,19 @@
+What to do now 
+
+Collectibles? 
+Snowballs?
+
+
+How do we make it more fun and challenging?
+- Snowballs
+- Collectibles
+-- Ufo pickup
+-- Invincibility
+-- Super jump
+
+- Bombs - Takes away two lives
+
+More Difficult:
+
+- Faster velocity
+- More snowballs

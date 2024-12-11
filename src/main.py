@@ -2,11 +2,14 @@ import pygame
 import random
 
 from utilities import *
+from world import *
 from blueman import *
 from ground import * 
 from snowman import *
 from snowball import *
 from collectible import *
+from device import *
+from apple import *
 
 pygame.init()
 
@@ -19,6 +22,7 @@ GOBLUE = (0, 100, 200)
 GRAVITY = 0.6
 
 A_BUTTON_INDEX = 0
+X_BUTTON_INDEX = 2
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("BlueMan")
@@ -32,14 +36,14 @@ joystick = None
 if pygame.joystick.get_count() > 0:
     joystick = pygame.joystick.Joystick(0)
     joystick.init()
-    xAxis = 0
-    yAxis = 0
-
 
 clock = pygame.time.Clock()
 FPS = 60
 
 # -----------------------------------------------------------------------------------------------------------------
+
+# World
+world = World()
 
 # Ground
 groundWidth = 300
@@ -51,11 +55,12 @@ groundObjects = []
 widthStopper = 0
 count = 0
 
-while widthStopper < SCREEN_WIDTH + (SCREEN_WIDTH  * 2):
+while widthStopper < SCREEN_WIDTH * 2:
     
     groundItem = Ground(count * groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
     groundObjects.append(groundItem)
     widthStopper += groundWidth
+
     count += 1
 
 # Blueman
@@ -88,25 +93,23 @@ snowball = SnowBall(2 * SCREEN_WIDTH, 0, 100, 100)
 snowballBuffer = 10
 snowball.y = groundLevel - snowball.h + (snowballBuffer)
 
+# Apples
+
+apple = Apple(SCREEN_WIDTH * 2, 0, 45, 45)
+apple.y = groundLevel - apple.h
+
 for x in range(4):
     snowballImages.append(loadImage("snowball" + str(x + 1) + ".png", snowball.w, snowball.h))
 
-# Collectible - UFO
 
-collectibles = []
-
-ufoCollect = Collectible("ufo", 800, 0, 40, 40)
-ufoCollectBuffer = 10
-ufoCollect.y = groundLevel - ufoCollect.h - ufoCollectBuffer
-
-collectibles.append(ufoCollect)
 
 # -----------------------------------------------------------------------------------------------------------------
 
+Background = loadImage("background.jpg", SCREEN_WIDTH, SCREEN_HEIGHT)
 GroundImg = loadImage("ground.png", ground.w, ground.h)
 SnowmanImg = loadImage("snowman.png", snowman.w, snowman.h)
 HeartImg = loadImage("heart.png", 20, 20)
-UfoCollectImg = loadImage(ufoCollect.pngName, ufoCollect.w, ufoCollect.h) 
+AppleImg = loadImage("apple.png", apple.w, apple.h)
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -124,21 +127,35 @@ distance = 0
 collidedWithSnowClose = False
 inCollision = None
 retrieveCount = 0
+ufoOver = False
+
 
 while running:
+
+    # Quitting Process ----------------------------------------------------------------------------------
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    pygame.draw.rect(screen, GOBLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+    #pygame.draw.rect(screen, GOBLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen.blit(Background, (0, 0))
+
+
+    # Joystick Functionality -----------------------------------------------------------------------------
 
     if joystick:
 
-        if event.type == pygame.JOYBUTTONDOWN and event.button == A_BUTTON_INDEX:
+        if event.type == pygame.JOYBUTTONDOWN:
+            if event.button == A_BUTTON_INDEX:
   
-            if blueman.velocityY == 0:
-                jump = True
-                blueman.velocityY = -blueman.jumpVelocity 
+                if blueman.velocityY == 0:
+                    jump = True
+                    blueman.velocityY = -blueman.jumpVelocity 
+            
+            elif event.button == X_BUTTON_INDEX:
+                pass
+
                     
     if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump:
         blueman.velocityY += GRAVITY
@@ -148,8 +165,8 @@ while running:
         blueman.y = groundLevel - blueman.h + (bluemanBuffer)
         blueman.velocityY = 0
 
-    blueInteger = int(runCount / 50) % 3
-    snowballInteger = int(runCount / 100) % 4
+    blueInteger = int(world.runCount / 50) % 3
+    snowballInteger = int(world.runCount / 100) % 4
 
     if not jump:
         screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
@@ -171,7 +188,7 @@ while running:
             x.x = random.randint(SCREEN_WIDTH + 100, SCREEN_WIDTH + 600)
 
     snowClose = None
-    minimum = 100000000
+    minimum = SCREEN_HEIGHT
     for x in snowmanObjects:
         if x.x > blueman.x and x.x < minimum:
             snowClose = x
@@ -212,30 +229,33 @@ while running:
         item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
         groundObjects.append(item)
 
-    distance += count / 100
-    blueman.velocity = initVelocity + int(distance / 100000)
+    # Apple
+    apple.x -= blueman.velocity * 0.65
+    if apple.x < -apple.w:
+        apple.x = SCREEN_WIDTH * random.randint(3, 7)
+    
+    if is_collision(blueman, apple, (blueman.h + apple.h) / 2):
+        blueman.lives += 1
+        apple.x = SCREEN_WIDTH * random.randint(3, 7)
 
+    # Distance & Velocity Changes
+    distance = world.runCount / 75
+    blueman.velocity = initVelocity + int(distance / 100)
+
+    screen.blit(AppleImg, (apple.x, apple.y))
+
+    # Top Display Items ----------------------------------------------------------------------------------
+
+    # Distance
     text = font.render("DISTANCE: " + str(int(distance)), True, BLACK)
     screen.blit(text, (10, 40))
-    
-    if text2 != None:
-        screen.blit(text2, (10, 25))
 
+    # Blueman Lives
     for x in range(blueman.lives):
         screen.blit(HeartImg, (10 + (25 * x), 10))
 
-    screen.blit(UfoCollectImg, (ufoCollect.x, ufoCollect.y))
-
-    for x in collectibles:
-        if x.retrieved:
-            xVal = SCREEN_WIDTH - (50 + (retrieveCount * 40))
-            text = font.render(str(int(retrieveCount + 1)), True, BLACK)
-            screen.blit(text, ((xVal + (x.w / 2)), 5))
-            screen.blit(UfoCollectImg, (xVal, 20))
-
+    world.runCount += blueman.velocity
     pygame.display.flip()
-     
-    runCount += blueman.velocity
     clock.tick(FPS)
 
 pygame.quit()
