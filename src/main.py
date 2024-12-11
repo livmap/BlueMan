@@ -6,6 +6,7 @@ from blueman import *
 from ground import * 
 from snowman import *
 from snowball import *
+from collectible import *
 
 pygame.init()
 
@@ -90,12 +91,22 @@ snowball.y = groundLevel - snowball.h + (snowballBuffer)
 for x in range(4):
     snowballImages.append(loadImage("snowball" + str(x + 1) + ".png", snowball.w, snowball.h))
 
+# Collectible - UFO
+
+collectibles = []
+
+ufoCollect = Collectible("ufo", 800, 0, 40, 40)
+ufoCollectBuffer = 10
+ufoCollect.y = groundLevel - ufoCollect.h - ufoCollectBuffer
+
+collectibles.append(ufoCollect)
+
 # -----------------------------------------------------------------------------------------------------------------
 
 GroundImg = loadImage("ground.png", ground.w, ground.h)
 SnowmanImg = loadImage("snowman.png", snowman.w, snowman.h)
 HeartImg = loadImage("heart.png", 20, 20)
-
+UfoCollectImg = loadImage(ufoCollect.pngName, ufoCollect.w, ufoCollect.h) 
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -112,6 +123,7 @@ jump = False
 distance = 0
 collidedWithSnowClose = False
 inCollision = None
+retrieveCount = 0
 
 while running:
     for event in pygame.event.get():
@@ -211,6 +223,15 @@ while running:
 
     for x in range(blueman.lives):
         screen.blit(HeartImg, (10 + (25 * x), 10))
+
+    screen.blit(UfoCollectImg, (ufoCollect.x, ufoCollect.y))
+
+    for x in collectibles:
+        if x.retrieved:
+            xVal = SCREEN_WIDTH - (50 + (retrieveCount * 40))
+            text = font.render(str(int(retrieveCount + 1)), True, BLACK)
+            screen.blit(text, ((xVal + (x.w / 2)), 5))
+            screen.blit(UfoCollectImg, (xVal, 20))
 
     pygame.display.flip()
      
