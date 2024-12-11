@@ -125,7 +125,6 @@ runCount = 0
 jump = False
 retrieveCount = 0
 
-
 while running:
 
     # Quitting Process ----------------------------------------------------------------------------------
@@ -169,7 +168,7 @@ while running:
     else:
         screen.blit(bluemanImages[1], (blueman.x, blueman.y))
 
-    if distance > 200:
+    if world.distanceRan > 200:
         screen.blit(snowballImages[snowballInteger], (snowball.x, snowball.y))
         snowball.x -= snowball.velocity
         if snowball.x <  -100:
@@ -236,7 +235,7 @@ while running:
 
     # Distance & Velocity Changes
     world.distanceRan = world.runCount / 75
-    blueman.velocity = initVelocity + int(distance / 100)
+    blueman.velocity = initVelocity + int(world.distanceRan / 100)
 
     screen.blit(AppleImg, (apple.x, apple.y))
 
