@@ -121,6 +121,7 @@ text2 = None
 # -----------------------------------------------------------------------------------------------------------------
 
 running = True
+gameOver = False
 runCount = 0
 jump = False
 retrieveCount = 0
@@ -133,123 +134,155 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    #pygame.draw.rect(screen, GOBLUE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
-    screen.blit(Background, (0, 0))
+    if not gameOver:
+        screen.blit(Background, (0, 0))
 
 
-    # Joystick Functionality -----------------------------------------------------------------------------
+        # Joystick Functionality -----------------------------------------------------------------------------
 
-    if joystick:
+        if joystick:
 
-        if event.type == pygame.JOYBUTTONDOWN:
-            if event.button == A_BUTTON_INDEX:
-  
-                if blueman.velocityY == 0:
-                    jump = True
-                    blueman.velocityY = -blueman.jumpVelocity 
-            
-            elif event.button == X_BUTTON_INDEX:
-                pass
-
-                    
-    if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump:
-        blueman.velocityY += GRAVITY
-
-    else:
-        jump = False
-        blueman.y = groundLevel - blueman.h + (bluemanBuffer)
-        blueman.velocityY = 0
-
-    blueInteger = int(world.runCount / 50) % 3
-    snowballInteger = int(world.runCount / 100) % 4
-
-    if not jump:
-        screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
-    else:
-        screen.blit(bluemanImages[1], (blueman.x, blueman.y))
-
-    if world.distanceRan > 200:
-        screen.blit(snowballImages[snowballInteger], (snowball.x, snowball.y))
-        snowball.x -= snowball.velocity
-        if snowball.x <  -100:
-            snowball.x = random.randint(SCREEN_WIDTH * 1.5, SCREEN_WIDTH * 3)
-
-
-    for x in snowmanObjects:
-        if x.x < SCREEN_WIDTH and x.x > -x.w:
-            screen.blit(SnowmanImg, (x.x, x.y))
-        
-        if x.x < -x.w - 10:
-            x.x = random.randint(SCREEN_WIDTH + 100, SCREEN_WIDTH + 600)
-
-    snowClose = None
-    minimum = SCREEN_HEIGHT
-    for x in snowmanObjects:
-        if x.x > blueman.x and x.x < minimum:
-            snowClose = x
-            minimum = x.x - blueman.x
-
+            if event.type == pygame.JOYBUTTONDOWN:
+                if event.button == A_BUTTON_INDEX:
     
-    if snowClose != None:
-        if is_collision(blueman, snowClose, 50):
-
-            if blueman.lives > 0 and not(inCollision):
-                    blueman.lives -= 1
-
-            inCollision = True
+                    if blueman.velocityY == 0:
+                        jump = True
+                        blueman.velocityY = -blueman.jumpVelocity 
                 
+                elif event.button == X_BUTTON_INDEX:
+                    pass
+
+                        
+        if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump:
+            blueman.velocityY += GRAVITY
+
         else:
-            text2 = None
-            inCollision = False
+            jump = False
+            blueman.y = groundLevel - blueman.h + (bluemanBuffer)
+            blueman.velocityY = 0
 
+        blueInteger = int(world.runCount / 50) % 3
+        snowballInteger = int(world.runCount / 100) % 4
 
-    for x in groundObjects:
-        screen.blit(GroundImg, (x.x, x.y))
+        if not jump:
+            screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
+        else:
+            screen.blit(bluemanImages[1], (blueman.x, blueman.y))
 
-    if jump:
-        blueman.y += blueman.velocityY
+        if world.distanceRan > 200:
+            screen.blit(snowballImages[snowballInteger], (snowball.x, snowball.y))
+            snowball.x -= blueman.velocity * 1.5
+            if snowball.x <  -100:
+                snowball.x = random.randint(SCREEN_WIDTH * 1.5, SCREEN_WIDTH * 3)
 
-    if blueman.x < 330:
-        blueman.x += blueman.velocity
-    else:
-        for x in groundObjects:
-            x.x -= blueman.velocity
 
         for x in snowmanObjects:
-            x.x -= blueman.velocity
+            if x.x < SCREEN_WIDTH and x.x > -x.w:
+                screen.blit(SnowmanImg, (x.x, x.y))
+            
+            if x.x < -x.w - 10:
+                x.x = random.randint(SCREEN_WIDTH + 100, SCREEN_WIDTH + 600)
 
-    if groundObjects[0].x < -groundWidth - 50:
-        del groundObjects[0]
-        endIndex = len(groundObjects) - 1
-        item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
-        groundObjects.append(item)
+        snowClose = None
+        minimum = SCREEN_HEIGHT
+        for x in snowmanObjects:
+            if x.x > blueman.x and x.x < minimum:
+                snowClose = x
+                minimum = x.x - blueman.x
 
-    # Apple
-    apple.x -= blueman.velocity * 0.65
-    if apple.x < -apple.w:
-        apple.x = SCREEN_WIDTH * random.randint(3, 7)
-    
-    if is_collision(blueman, apple, (blueman.h + apple.h) / 2):
-        blueman.lives += 1
-        apple.x = SCREEN_WIDTH * random.randint(3, 7)
+        
+        if snowClose != None:
+            if is_collision(blueman, snowClose, 50):
 
-    # Distance & Velocity Changes
-    world.distanceRan = world.runCount / 75
-    blueman.velocity = initVelocity + int(world.distanceRan / 100)
+                if blueman.lives > 0 and not(inCollision):
+                        blueman.lives -= 1
 
-    screen.blit(AppleImg, (apple.x, apple.y))
+                elif blueman.lives == 0:
+                    gameOver = True
 
-    # Top Display Items ----------------------------------------------------------------------------------
+                inCollision = True
+                    
+            else:
+                text2 = None
+                inCollision = False
 
-    # Distance
-    text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
-    screen.blit(text, (10, 40))
 
-    # Blueman Lives
-    for x in range(blueman.lives):
-        screen.blit(HeartImg, (10 + (25 * x), 10))
+        for x in groundObjects:
+            screen.blit(GroundImg, (x.x, x.y))
 
-    world.runCount += blueman.velocity
+        if jump:
+            blueman.y += blueman.velocityY
+
+        if blueman.x < 330:
+            blueman.x += blueman.velocity
+        else:
+            for x in groundObjects:
+                x.x -= blueman.velocity
+
+            for x in snowmanObjects:
+                x.x -= blueman.velocity
+
+        if groundObjects[0].x < -groundWidth - 50:
+            del groundObjects[0]
+            endIndex = len(groundObjects) - 1
+            item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
+            groundObjects.append(item)
+
+        # Apple
+        apple.x -= blueman.velocity * 0.65
+        if apple.x < -apple.w:
+            apple.x = SCREEN_WIDTH * random.randint(3, 7)
+        
+        if is_collision(blueman, apple, (blueman.h + apple.h) / 2):
+            blueman.lives += 1
+            apple.x = SCREEN_WIDTH * random.randint(3, 7)
+
+        # Distance & Velocity Changes
+        world.distanceRan = world.runCount / 75
+        blueman.velocity = initVelocity + int(world.distanceRan / 100)
+
+        screen.blit(AppleImg, (apple.x, apple.y))
+
+        # Top Display Items ----------------------------------------------------------------------------------
+
+        # Distance
+        text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
+        screen.blit(text, (10, 40))
+
+        # Blueman Lives
+        for x in range(blueman.lives):
+            screen.blit(HeartImg, (10 + (25 * x), 10))
+
+        world.runCount += blueman.velocity
+
+    else:
+        screen.blit(Background, (0, 0))
+
+        for x in groundObjects:
+            screen.blit(GroundImg, (x.x, x.y))
+
+        for x in groundObjects:
+                x.x -= blueman.velocity
+
+        if groundObjects[0].x < -groundWidth - 50:
+            del groundObjects[0]
+            endIndex = len(groundObjects) - 1
+            item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
+            groundObjects.append(item)
+
+        if blueman.velocity > 0:
+            blueman.velocity -= 0.05
+
+        world.runCount += blueman.velocity
+
+        blueInteger = int(world.runCount / 50) % 3
+
+        screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
+
+        text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
+        screen.blit(text, (10, 40))
+
+
     pygame.display.flip()
     clock.tick(FPS)
 
