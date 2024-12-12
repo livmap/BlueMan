@@ -66,7 +66,7 @@ while widthStopper < SCREEN_WIDTH * 2:
 # Blueman
 blueman = BlueMan(100, 0, 75, 75)
 bluemanBuffer = 10
-initVelocity = 10
+initVelocity = 7
 blueman.y = groundLevel - blueman.h  + (bluemanBuffer)
 bluemanImages = []
 
@@ -143,6 +143,7 @@ superJumpCollected = False
 cannonCollected = False
 
 collidedWith = None
+collideSnowball = False
 
 while running:
 
@@ -214,11 +215,21 @@ while running:
         else:
             screen.blit(bluemanImages[1], (blueman.x, blueman.y))
 
-        if world.distanceRan > 200:
+        # Snowballs 
+
+        if world.distanceRan > 100:
             screen.blit(snowballImages[snowballInteger], (snowball.x, snowball.y))
+            if is_collision(blueman, snowball, (blueman.w + snowball.w) / 2):
+                if not collideSnowball:
+                    collideSnowball = True
+                    jump =  True
+                    blueman.velocityY = -1.5 * blueman.jumpVelocity
+            else:
+                collideSnowball = False
+            
             snowball.x -= blueman.velocity * 1.5
             if snowball.x <  -100:
-                snowball.x = random.randint(SCREEN_WIDTH * 1.5, SCREEN_WIDTH * 3)
+                snowball.x = random.randint(SCREEN_WIDTH * 5, SCREEN_WIDTH * 10)
 
 
         for x in snowmanObjects:
