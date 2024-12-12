@@ -18,3 +18,22 @@ More Difficult:
 - Faster velocity
 - More snowballs
 
+How do we code the collectibles?
+
+Invincibilty:
+No lives lost even in Collisions
+- At every place we lose a live, add one background
+For how many metres? 150m
+
+Super Jump:
+velocity doubles - only if in the air
+startY doubles
+active for 150 m
+
+Ufo:
+Ufo slowly comes in 
+Hovers over player
+Play goes slowly Up
+Glides above obstacles for 300m
+He is set back down
+Ufo goes away

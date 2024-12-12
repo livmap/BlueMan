@@ -8,8 +8,9 @@ from ground import *
 from snowman import *
 from snowball import *
 from collectible import *
-from device import *
+from ufo import *
 from apple import *
+
 
 pygame.init()
 
@@ -17,6 +18,8 @@ SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 700
 
 BLACK = (0, 0, 0)
+GRASSGREEN = (50, 200, 0)
+RED = (255, 0, 0)
 GOBLUE = (0, 100, 200)
 
 GRAVITY = 0.6
@@ -104,6 +107,11 @@ for x in range(4):
 
 collectibles = []
 collectiblesCollected = []
+collectiblesDistances = [200, 100, 100, 100]
+
+# Ufo
+
+ufoW = 150
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -112,6 +120,8 @@ GroundImg = loadImage("ground.png", ground.w, ground.h)
 SnowmanImg = loadImage("snowman.png", snowman.w, snowman.h)
 HeartImg = loadImage("heart.png", 20, 20)
 AppleImg = loadImage("apple.png", apple.w, apple.h)
+UfoImg = loadImage("ufo.png", ufoW, ufoW)
+
 
 # -----------------------------------------------------------------------------------------------------------------
 
@@ -129,6 +139,7 @@ jump = False
 retrieveCount = 0
 nextCollectible = 50
 deletedCollectible = None
+currentVelocity = initVelocity
 
 #
 
@@ -142,8 +153,19 @@ invincibilityCollected = False
 superJumpCollected = False
 cannonCollected = False
 
+selectedCollectible = 0
+activeCollectible = None
+activatedAt = 0
+activated = False
+
+ufo = None
+ufoOver = False
+
 collidedWith = None
 collideSnowball = False
+
+moved = False
+
 
 while running:
 
@@ -188,20 +210,93 @@ while running:
 
         if joystick:
 
+
+            axis_x = joystick.get_axis(0)  
+            axis_y = joystick.get_axis(1)
+
+            if event.type == pygame.JOYBUTTONDOWN and event.type == pygame.JOYAXISMOTION:
+                if activeCollectible == 3:
+                    cannonFrac = (abs(axis_y) / 1) * 2
+                    jump = True
+                    blueman.velocityY = (cannonFrac * -5) * blueman.jumpVelocity
+
             if event.type == pygame.JOYBUTTONDOWN:
                 if event.button == A_BUTTON_INDEX:
-    
-                    if blueman.velocityY == 0:
+
+                    if activeCollectible == 3:
+                        cannonFrac = (abs(axis_y) / 1) * 2
                         jump = True
-                        blueman.velocityY = -blueman.jumpVelocity 
+                        blueman.velocityY = (cannonFrac * -2) * blueman.jumpVelocity
+
+                    else:
+    
+                        if blueman.velocityY == 0:
+                            jump = True
+                            if activeCollectible == 2:
+
+                                blueman.velocityY = -1.5 * blueman.jumpVelocity 
+                            else:
+                                blueman.velocityY = -blueman.jumpVelocity 
                 
                 elif event.button == X_BUTTON_INDEX:
-                    pass
+                    if not activated and activeCollectible == None:
+                        if selectedCollectible == 0:
+                            if UfoCount > 0:
+                                activeCollectible = selectedCollectible
+                                activatedAt = world.distanceRan
+                                activated = True
+                                UfoCount -= 1
+                                ufo = Ufo(SCREEN_WIDTH, 200, 150, 150)
+
+                        if selectedCollectible == 1:
+                            if InvincibilityCount > 0:
+                                activeCollectible = selectedCollectible
+                                activatedAt = world.distanceRan
+                                activated = True
+                                InvincibilityCount -= 1
+
+                        if selectedCollectible == 2:
+                            if SuperJumpCount > 0:
+                                activeCollectible = selectedCollectible
+                                activatedAt = world.distanceRan
+                                activated = True
+                                SuperJumpCount -= 1
+
+                        if selectedCollectible == 3:
+                            if CannonCount > 0:
+                                activeCollectible = selectedCollectible
+                                activatedAt = world.distanceRan
+                                activated = True
+                                CannonCount -= 1
+                        
+                    else:
+                        activated = False
+
+            deadzone = 0.2
+            if axis_x < -deadzone:
+                if not moved:
+                    if selectedCollectible < 3:
+                        selectedCollectible += 1
+                    else:
+                        selectedCollectible = 3
+                    moved = True
+            if axis_x > deadzone:
+                if not moved:
+                    if selectedCollectible > 0:
+                        selectedCollectible -= 1
+                    else:
+                        selectedCollectible = 0
+                    moved = True
+            elif axis_x > -deadzone and axis_x < deadzone:
+                moved = False
+                
 
                         
-        if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump:
+        if (blueman.y <= groundLevel - blueman.h + (bluemanBuffer)) and jump and not ufoOver:
             blueman.velocityY += GRAVITY
-
+        elif ufoOver:
+            if blueman.y > 400:
+                blueman.y -= 1
         else:
             jump = False
             blueman.y = groundLevel - blueman.h + (bluemanBuffer)
@@ -210,9 +305,9 @@ while running:
         blueInteger = int(world.runCount / 50) % 3
         snowballInteger = int(world.runCount / 100) % 4
 
-        if not jump:
+        if not jump and not ufoOver:
             screen.blit(bluemanImages[blueInteger], (blueman.x, blueman.y))
-        else:
+        elif ufoOver or jump:
             screen.blit(bluemanImages[1], (blueman.x, blueman.y))
 
         # Snowballs 
@@ -250,7 +345,7 @@ while running:
         if snowClose != None:
             if is_collision(blueman, snowClose, 50):
 
-                if blueman.lives > 0 and not(inCollision):
+                if (blueman.lives > 0) and (not(inCollision)) and (activeCollectible != 1):
                         blueman.lives -= 1
 
                 elif blueman.lives == 0:
@@ -315,6 +410,7 @@ while running:
             
             del collectibles[deletedCollectible]
 
+        # Display Collectibles
         for x in range(4):
             if x == 0:
                 xVal = (SCREEN_WIDTH  - 60) - (x * 60)
@@ -322,24 +418,52 @@ while running:
                 screen.blit(text, (xVal + 15, 10))
                 img = loadImage("ufo_collectible.png", 40, 40)
                 screen.blit(img, (xVal, 40))
+                if selectedCollectible == 0:
+                    pygame.draw.rect(screen, GRASSGREEN, (xVal, 85, 40, 5))
+                else:
+                    pygame.draw.rect(screen, BLACK, (xVal, 85, 40, 5))
+
+                if activeCollectible == 0:
+                    pygame.draw.rect(screen, RED, (xVal, 95, 40, 5))
             elif x == 1:
                 xVal = (SCREEN_WIDTH  - 60) - (x * 60)
                 text = font.render(str(InvincibilityCount), True, BLACK)
                 screen.blit(text, (xVal + 15, 10))
                 img = loadImage("invincibility_collectible.png", 40, 40)
                 screen.blit(img, (xVal, 40))
+                if selectedCollectible == 1:
+                    pygame.draw.rect(screen, GRASSGREEN, (xVal, 85, 40, 5))
+                else:
+                    pygame.draw.rect(screen, BLACK, (xVal, 85, 40, 5))
+                
+                if activeCollectible == 1:
+                    pygame.draw.rect(screen, RED, (xVal, 95, 40, 5))
             elif x == 2:
                 xVal = (SCREEN_WIDTH  - 60) - (x * 60)
                 text = font.render(str(SuperJumpCount), True, BLACK)
                 screen.blit(text, (xVal + 15, 10))
                 img = loadImage("superJump_collectible.png", 40, 40)
                 screen.blit(img, (xVal, 40))
+                if selectedCollectible == 2:
+                    pygame.draw.rect(screen, GRASSGREEN, (xVal, 85, 40, 5))
+                else:
+                    pygame.draw.rect(screen, BLACK, (xVal, 85, 40, 5))
+
+                if activeCollectible == 2:
+                    pygame.draw.rect(screen, RED, (xVal, 95, 40, 5))
             else:
                 xVal = (SCREEN_WIDTH  - 60) - (x * 60)
                 text = font.render(str(CannonCount), True, BLACK)
                 screen.blit(text, (xVal + 15, 10))
                 img = loadImage("cannon_collectible.png", 40, 40)
                 screen.blit(img, (xVal, 40))
+                if selectedCollectible == 3:
+                    pygame.draw.rect(screen, GRASSGREEN, (xVal, 85, 40, 5))
+                else:
+                    pygame.draw.rect(screen, BLACK, (xVal, 85, 40, 5))
+
+                if activeCollectible == 3:
+                    pygame.draw.rect(screen, RED, (xVal, 95, 40, 5))
             
 
         # Apple
@@ -353,7 +477,19 @@ while running:
 
         # Distance & Velocity Changes
         world.distanceRan = int(world.runCount / 75)
-        blueman.velocity = initVelocity + int(world.distanceRan / 100)
+        currentVelocity = initVelocity + int(world.distanceRan / 100)
+        if activeCollectible == 2:
+            if jump:
+                blueman.velocity = 2 * currentVelocity
+            else:
+                blueman.velocity = currentVelocity
+        elif activeCollectible == 3:
+            if jump:
+                blueman.velocity = 5 * currentVelocity
+            else:
+                blueman.velocity = currentVelocity
+        else:
+            blueman.velocity = currentVelocity
 
         screen.blit(AppleImg, (apple.x, apple.y))
 
@@ -363,11 +499,42 @@ while running:
         text = font.render("DISTANCE: " + str(int(world.distanceRan)) + " : " + str(len(collectiblesCollected)), True, BLACK)
         screen.blit(text, (10, 40))
 
-        # Blueman Lives
+        # Display Blueman Lives
         for x in range(blueman.lives):
             screen.blit(HeartImg, (10 + (25 * x), 10))
 
         world.runCount += blueman.velocity
+
+        # Operate UFO
+
+        if activeCollectible == 0:
+            if ufo.x > blueman.x - ((ufo.w / 2) - 30):
+                ufo.x -= blueman.velocity * 0.5
+            
+            else:
+                ufoOver = True
+
+
+        if (activeCollectible == None) and (ufo != None):
+            if (ufo.x > -1.5 * ufo.w):
+                ufo.x -= blueman.velocity * 0.5
+
+        if ufo != None:
+
+            screen.blit(UfoImg, (ufo.x, ufo.y))
+
+
+        # Deactivate Collectibles
+
+        if activeCollectible != None:
+            num = activeCollectible
+            if world.distanceRan > activatedAt + collectiblesDistances[num]:
+                if activeCollectible == 0:
+                    jump = True
+                    ufoOver = False
+                    activeCollectible = None
+                else:
+                    activeCollectible = None
 
     else:
         screen.blit(Background, (0, 0))
@@ -395,6 +562,8 @@ while running:
 
         text = font.render("DISTANCE: " + str(int(world.distanceRan)), True, BLACK)
         screen.blit(text, (10, 40))
+
+        
 
 
     pygame.display.flip()
