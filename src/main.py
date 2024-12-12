@@ -217,7 +217,7 @@ while running:
 
         # Snowballs 
 
-        if world.distanceRan > 100:
+        if world.distanceRan > 200:
             screen.blit(snowballImages[snowballInteger], (snowball.x, snowball.y))
             if is_collision(blueman, snowball, (blueman.w + snowball.w) / 2):
                 if not collideSnowball:
