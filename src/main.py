@@ -130,6 +130,20 @@ retrieveCount = 0
 nextCollectible = 50
 deletedCollectible = None
 
+#
+
+UfoCount = 0
+InvincibilityCount = 0
+SuperJumpCount = 0
+CannonCount = 0
+
+ufoCollected = False
+invincibilityCollected = False
+superJumpCollected = False
+cannonCollected = False
+
+collidedWith = None
+
 while running:
 
     # Quitting Process ----------------------------------------------------------------------------------
@@ -259,30 +273,62 @@ while running:
             item = Ground(groundObjects[endIndex].x + groundWidth, groundLevel + 1, groundWidth, groundHeight, groundLevel)
             groundObjects.append(item)
 
-        # Collectibles
+        # Collectibles - Collisions and Movement
 
         for x in range(len(collectibles)):
-            collectibles[x].x -= blueman.velocity * 0.65
-            screen.blit(loadImage(collectibles[x].pngName, collectibles[x].w, collectibles[x].h), (collectibles[x].x, collectibles[x].y))
-            if is_collision(blueman, collectibles[x], (blueman.w + collectibles[x].w) / 2):
-                collectiblesCollected.append(collectibles[x])
-                deletedCollectible = x
+            item = collectibles[x]
+            item.x -= blueman.velocity * 0.65
+            screen.blit(loadImage(item.pngName, item.w, item.h), (item.x, item.y))
+            if is_collision(blueman, item, (blueman.w + item.w) / 2):
+                if collidedWith == None:
+                    if item.type == "ufo":
+                        UfoCount += 1
+                    elif item.type == "invincibility":
+                        InvincibilityCount += 1
+                    elif item.type == "superJump":
+                        SuperJumpCount += 1
+                    else:
+                        CannonCount += 1
+
+                    collidedWith = item
+                    deletedCollectible = x
             else:
-                if collectibles[x].x < -collectibles[x].w:
+                collidedWith = None
+                if item.x < -item.w:
                     deletedCollectible = x
                 else:
                     deletedCollectible = None
             
-            
+        # Process Deletion of Collectible
         if deletedCollectible != None and len(collectibles) > 0:
             
             del collectibles[deletedCollectible]
 
-        for x in range(len(collectiblesCollected)):
-            item = collectiblesCollected[x]
-            img = loadImage(item.pngName, item.w * 0.8, item.h * 0.8)
-            xVal = (SCREEN_WIDTH - 60) - (60 * x)
-            screen.blit(img, (xVal, 30))
+        for x in range(4):
+            if x == 0:
+                xVal = (SCREEN_WIDTH  - 60) - (x * 60)
+                text = font.render(str(UfoCount), True, BLACK)
+                screen.blit(text, (xVal + 15, 10))
+                img = loadImage("ufo_collectible.png", 40, 40)
+                screen.blit(img, (xVal, 40))
+            elif x == 1:
+                xVal = (SCREEN_WIDTH  - 60) - (x * 60)
+                text = font.render(str(InvincibilityCount), True, BLACK)
+                screen.blit(text, (xVal + 15, 10))
+                img = loadImage("invincibility_collectible.png", 40, 40)
+                screen.blit(img, (xVal, 40))
+            elif x == 2:
+                xVal = (SCREEN_WIDTH  - 60) - (x * 60)
+                text = font.render(str(SuperJumpCount), True, BLACK)
+                screen.blit(text, (xVal + 15, 10))
+                img = loadImage("superJump_collectible.png", 40, 40)
+                screen.blit(img, (xVal, 40))
+            else:
+                xVal = (SCREEN_WIDTH  - 60) - (x * 60)
+                text = font.render(str(CannonCount), True, BLACK)
+                screen.blit(text, (xVal + 15, 10))
+                img = loadImage("cannon_collectible.png", 40, 40)
+                screen.blit(img, (xVal, 40))
             
 
         # Apple
